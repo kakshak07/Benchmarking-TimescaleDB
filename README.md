@@ -27,8 +27,6 @@ In
    ```bash
    python -m benchmark_tool.cli data/query_params.csv --workers 3
 
-
-
 ### Though process and implementation details
 The overall approach centers on implementing a hashmap-based strategy to efficiently allocate queries to workers, ensuring minimal overhead and ensuring the same worker processes queries for a given hostname across multiple query executions. This design ensures locality of data, optimizes cache utilization, and prevents redundant connections to the TimescaleDB instance, leading to better performance.
 
