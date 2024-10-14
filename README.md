@@ -19,11 +19,9 @@ In
 3. **Run this, if you run without -d it will not dettac from terminal and by default you will see output for total worker 3 as default** 
    ```bash
    docker compose -f docker-compose.yml up -d --build
-
 4. **Enter into the service container** 
    ```bash
    docker compose exec python_service /bin/bash
-
 
 4. **Now you are inside the service container, now data will already be present since the migration script is completed successfully, now modify the worker thread to get the output results** 
    ```bash
