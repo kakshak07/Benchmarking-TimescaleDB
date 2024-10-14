@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: timescaledb
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  python_service:
+    build: 
+      context: .
+    container_name: python_service
+    depends_on:
+      timescaledb:
+        condition: service_healthy  # Wait until timescaledb is healthy
+    volumes:
+      - .:/app  # Mount the current directory to /app inside the container
+    environment:
+      DB_HOST: timescaledb  # Ensure these env variables are passed to your service
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: postgres
+      DB_PORT: 5432
+    command: >
+      bash -c "until python wait_for_db.py; do echo 'Waiting for DB...'; sleep 5; done &&
+               python -m migrations.config_migration &&
+               python -m benchmark_tool.cli data/query_params.csv --workers 3 &&
+               tail -f /dev/null"
