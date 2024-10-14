@@ -50,7 +50,6 @@ Minimum, median, average, and maximum query times. This data helps determine the
 The provided Docker Compose configuration sets up a `timescaledb` service, utilizing the latest TimescaleDB image with PostgreSQL 16, and a `python_service` that depends on it. The `timescaledb` container is configured with a health check to ensure it's ready before the Python service starts, which mounts the current directory to allow access to the application code and relevant files. When the `python_service` runs, it first executes a script (`wait_for_db.py`) to confirm the database is available. Upon successful connection, it initiates the configuration migration (`migrations.config_migration`) and subsequently launches the benchmarking tool, using parameters defined in `data/query_params.csv` with a specified number of worker processes. This sequence not only ensures that the application is properly connected to the database but also guarantees that the configuration migration is executed, leading to updated migration records being saved.
 
 **Results:**
-# Benchmark Results
 
 # Benchmark Results
 
