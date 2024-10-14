@@ -1,13 +1,11 @@
 # TimescaleDB Benchmarking Tool
 
 ## Overview
-This project provides a Python-based command-line tool to benchmark SELECT query performance across multiple workers against a TimescaleDB instance. The tool takes a CSV file with query parameters and executes queries concurrently using a worker pool. Each worker processes queries for specific hostnames, ensuring consistency and concurrency. The results are aggregated to provide key performance statistics, including of queries run, the total processing time across all queries, the minimum query time (for a single query), the median
-query time, the average query time, and the maximum query time..
-
-In
+This project provides a Python-based command-line tool to benchmark SELECT query performance across multiple workers against a TimescaleDB instance. The tool takes a CSV file with query parameters and executes queries concurrently using a worker pool. Each worker processes queries for specific hostnames, ensuring consistency and concurrency. The results are aggregated to provide key performance statistics, including of queries run, the total processing time across all queries, the minimum query time (for a single query), the median query time, the average query time, and the maximum query time..
 
 
-## Implementations Details
+
+## Installation Steps
 
 1. **Clone the repository:**
    ```bash
