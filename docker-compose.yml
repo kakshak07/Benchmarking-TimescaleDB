@@ -31,7 +31,7 @@ services:
       DB_NAME: postgres
       DB_PORT: 5432
     command: >
-      bash -c "until python wait_for_db.py; do echo 'Waiting for DB...'; sleep 5; done &&
+      bash -c "until python health_check_db.py; do echo 'Waiting for DB...'; sleep 5; done &&
                python -m migrations.config_migration &&
                python -m benchmark_tool.cli data/query_params.csv --workers 3 &&
                tail -f /dev/null"

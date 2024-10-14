@@ -51,7 +51,9 @@ The provided Docker Compose configuration sets up a `timescaledb` service, utili
 
 # Benchmark Results
 
-| Workers | Total Queries | Total Time (s) | Min Time (s) | Max Time (s) | Avg Time (s) | Median Time (s) |
+Results are in milli seconds:
+
+| Workers | Total Queries | Total Time (ms) | Min Time (ms) | Max Time (ms) | Avg Time (ms) | Median Time (ms) |
 |---------|---------------|----------------|---------------|---------------|---------------|------------------|
 | 1       | 200           | 0.4368         | 0.0012        | 0.0277        | 0.0022        | 0.0019           |
 | 2       | 200           | 0.3998         | 0.0005        | 0.0162        | 0.0020        | 0.0019           |
