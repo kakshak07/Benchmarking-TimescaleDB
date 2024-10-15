@@ -26,14 +26,14 @@ This project provides a Python-based command-line tool to benchmark SELECT query
    python -m benchmark_tool.cli data/query_params.csv --workers 3
 
 ### Though process and implementation details
-The overall approach centers on implementing a hashmap-based strategy to efficiently allocate queries to workers, ensuring minimal overhead and ensuring the same worker processes queries for a given hostname across multiple query executions. This design ensures locality of data, optimizes cache utilization, and prevents redundant connections to the TimescaleDB instance, leading to better performance.
+The overall approach centers on implementing a consistent hashing mechanism strategy to efficiently allocate queries to workers, ensuring minimal overhead and ensuring the same worker processes queries for a given hostname across multiple query executions. This design ensures locality of data, optimizes cache utilization, and prevents redundant connections to the TimescaleDB instance, leading to better performance.
 
 
 **Worker Management and Concurrent Query Execution:** Given the need for concurrent processing, the number of workers is specified dynamically, and each worker operates in its own thread or process. By employing a hashmap strategy, queries are distributed to workers based on the hostname. This mapping is critical since queries for the same hostname need to be consistently processed by the same worker for better performance and query locality.
 
 The worker mapping can be visualized as:
 
-Hashmap (hostname → worker): A simple hashing function is applied to the hostname, determining which worker should handle queries associated with that hostname. This avoids random assignment and guarantees a stable worker-hostname relationship across queries.
+Hashmap (hashing_function(hostname) → worker): A simple hashing function is applied to the hostname, determining which worker should handle queries associated with that hostname. This avoids random assignment and guarantees a stable worker-hostname relationship across queries.
 
 
 **Summary Report Generation:** After all queries are processed, the tool outputs a comprehensive report with the following statistics:
@@ -48,16 +48,16 @@ Minimum, median, average, and maximum query times. This data helps determine the
 The provided Docker Compose configuration sets up a `timescaledb` service, utilizing the latest TimescaleDB image with PostgreSQL 16, and a `python_service` that depends on it. The `timescaledb` container is configured with a health check to ensure it's ready before the Python service starts, which mounts the current directory to allow access to the application code and relevant files. When the `python_service` runs, it first executes a script (`health_check_db.py`) to confirm the database is available. Upon successful connection, it initiates the configuration migration (`migrations.config_migration`) and subsequently launches the benchmarking tool, using parameters defined in `data/query_params.csv` with a specified number of worker processes. This sequence not only ensures that the application is properly connected to the database but also guarantees that the configuration migration is executed, leading to updated migration records being saved.
 
 # Benchmark Results
-
+The results can vary with the language used in implementation, the hashing function used for assigning worker to nodes etc.
 Results are in milli seconds:
 
 | Workers | Total Queries | Total Time (ms) | Min Time (ms) | Max Time (ms) | Avg Time (ms) | Median Time (ms) |
-|---------|---------------|----------------|---------------|---------------|---------------|------------------|
-| 1       | 200           | 0.4368         | 0.0012        | 0.0277        | 0.0022        | 0.0019           |
-| 2       | 200           | 0.3998         | 0.0005        | 0.0162        | 0.0020        | 0.0019           |
-| 3       | 200           | 0.5772         | 0.0005        | 0.0875        | 0.0029        | 0.0020           |
-| 4       | 200           | 0.5031         | 0.0005        | 0.0095        | 0.0025        | 0.0021           |
-| 5       | 200           | 1.3855         | 0.0005        | 0.3057        | 0.0069        | 0.0024           |
+|---------|---------------|----------------|--------------|--------------|--------------|-----------------|
+| 1       | 200           | 1.0362         | 0.0014       | 0.0496       | 0.0052       | 0.0033          |
+| 2       | 200           | 0.6139         | 0.0005       | 0.0534       | 0.0031       | 0.0024          |
+| 3       | 200           | 0.7131         | 0.0005       | 0.0238       | 0.0036       | 0.0026          |
+| 4       | 200           | 0.6838         | 0.0005       | 0.1438       | 0.0034       | 0.0021          |
+| 5       | 200           | 1.5371         | 0.0005       | 0.7634       | 0.0077       | 0.0024          |
 
 
 **Notes:**

@@ -4,7 +4,23 @@ import concurrent.futures
 from benchmark_tool.query_executor import execute_query
 from benchmark_tool.utils import read_csv, parse_time
 import time
+import hashlib
 import statistics
+
+
+def assign_worker(hostname, num_workers):
+    """
+    Assigns a worker based on the hash of the hostname.
+    
+    Args:
+        hostname (str): The hostname for which a worker is assigned.
+        num_workers (int): The number of workers available.
+        
+    Returns:
+        int: The worker ID to which the hostname is assigned.
+    """
+    return int(hashlib.md5(hostname.encode()).hexdigest(), 16) % num_workers
+
 
 def run_queries(concurrent_workers, query_file):
     """
@@ -21,8 +37,6 @@ def run_queries(concurrent_workers, query_file):
         print(f"Running queries with {concurrent_workers} concurrent workers...")
         queries = read_csv(query_file)
         
-        # Create a mapping of hostname to a worker
-        hostname_to_worker = {}
         results = []
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=concurrent_workers) as executor:
@@ -30,11 +44,9 @@ def run_queries(concurrent_workers, query_file):
             for query in queries:
                 hostname, start_time, end_time = query
                 
-                if hostname not in hostname_to_worker:
-                    worker_id = len(hostname_to_worker) % concurrent_workers
-                    hostname_to_worker[hostname] = worker_id
+                # Assign worker based on the hostname hash
+                worker_id = assign_worker(hostname, concurrent_workers)
                 
-                worker_id = hostname_to_worker[hostname]
                 future = executor.submit(execute_query, query)
                 future_to_query[future] = (worker_id, query)
             
