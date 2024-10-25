@@ -6,6 +6,10 @@ from benchmark_tool.utils import read_csv, parse_time
 import time
 import hashlib
 import statistics
+from threading import Lock
+
+future_to_query_lock = Lock()
+worker_queues_lock = Lock()
 
 
 def assign_worker(hostname, num_workers):
@@ -55,8 +59,10 @@ def run_queries(concurrent_workers, query_file):
 
                 # Submit the query to the thread pool, and timing is moved inside
                 future = executor.submit(time_query_execution, query)
-                future_to_query[future] = query
-                worker_queues[worker_id].append(query)
+                with future_to_query_lock:
+                    future_to_query[future] = query
+                with worker_queues_lock:
+                    worker_queues[worker_id].append(query)
 
             # Collecting the results as they complete
             for future in concurrent.futures.as_completed(future_to_query):
