@@ -12,11 +12,13 @@ from threading import Lock
 future_to_query_lock = Lock()
 worker_queues_lock = Lock()
 
+
 def assign_worker(hostname, num_workers):
     """
     Assigns a worker based on the hash of the hostname.
     """
     return int(hashlib.md5(hostname.encode()).hexdigest(), 16) % num_workers
+
 
 def time_query_execution(query):
     """
@@ -41,6 +43,7 @@ def time_query_execution(query):
     total_time = (tok - tik) * 1000  # Convert to milliseconds
 
     return hostname, total_time
+
 
 def run_queries(concurrent_workers, query_file):
     """
@@ -98,6 +101,7 @@ def run_queries(concurrent_workers, query_file):
         print(f"An unexpected error occurred: {str(e)}")
         return []
 
+
 def main():
     """
     The main function parses arguments, runs the benchmark, and calculates statistics.
@@ -134,6 +138,7 @@ def main():
 
     except Exception as e:
         print(f"An error occurred during benchmarking: {str(e)}")
+
 
 if __name__ == "__main__":
     main()
