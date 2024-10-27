@@ -1,7 +1,7 @@
 import psycopg2
 from connection.db_connection import get_connection
 from .utils import parse_time
-
+import time
 # Query template to retrieve CPU usage statistics by minute
 QUERY_TEMPLATE = """
 SELECT

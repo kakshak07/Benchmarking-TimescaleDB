@@ -8,63 +8,72 @@ import hashlib
 import statistics
 from threading import Lock
 
+# Locks to protect shared resources
 future_to_query_lock = Lock()
 worker_queues_lock = Lock()
-
 
 def assign_worker(hostname, num_workers):
     """
     Assigns a worker based on the hash of the hostname.
-    
-    Args:
-        hostname (str): The hostname for which a worker is assigned.
-        num_workers (int): The number of workers available.
-        
-    Returns:
-        int: The worker ID to which the hostname is assigned.
     """
     return int(hashlib.md5(hostname.encode()).hexdigest(), 16) % num_workers
 
+def time_query_execution(query):
+    """
+    Helper function to execute the query and measure the time taken.
+
+    Args:
+        query (tuple): A tuple containing (hostname, start_time, end_time).
+
+    Returns:
+        tuple: (hostname, execution time in milliseconds)
+    """
+    hostname, start_time, end_time = query
+
+    # Record the start time just before executing the query
+    tik = time.time()
+
+    # Execute the query (assuming this is a synchronous blocking call)
+    execute_query(query)
+
+    # Record the end time after the query completes
+    tok = time.time()
+    total_time = (tok - tik) * 1000  # Convert to milliseconds
+
+    return hostname, total_time
 
 def run_queries(concurrent_workers, query_file):
     """
     Executes queries from a CSV file using multiple concurrent workers.
-
-    Args:
-        concurrent_workers (int): The number of workers to run queries concurrently.
-        query_file (str): Path to the CSV file containing hostname, start_time, and end_time values.
-
-    Returns:
-        list: A list of tuples containing (hostname, query execution time in milliseconds).
     """
     try:
         print(f"Running queries with {concurrent_workers} concurrent workers...")
         queries = read_csv(query_file)
-
         results = []
 
-        # Using ThreadPoolExecutor to run queries concurrently
-        with concurrent.futures.ThreadPoolExecutor(max_workers=concurrent_workers) as executor:
-            future_to_query = {}
+        # Create a separate executor for each worker
+        executors = [concurrent.futures.ThreadPoolExecutor(max_workers=1) for _ in range(concurrent_workers)]
 
-            # Dictionary to store workers and their assigned queries
-            worker_queues = {i: [] for i in range(concurrent_workers)}
+        # Dictionary to store futures for each worker
+        worker_queues = {i: [] for i in range(concurrent_workers)}
 
-            # Assign queries to workers based on hostname hash
-            for query in queries:
-                hostname, start_time, end_time = query
+        # Assign queries to workers based on hostname hash
+        future_to_query = {}
+        for query in queries:
+            hostname, start_time, end_time = query
 
-                # Assign worker based on the hostname hash
-                worker_id = assign_worker(hostname, concurrent_workers)
+            # Determine the worker ID for the given hostname
+            worker_id = assign_worker(hostname, concurrent_workers)
 
-                # Submit the query to the thread pool, and timing is moved inside
-                future = executor.submit(time_query_execution, query)
-                with future_to_query_lock:
-                    future_to_query[future] = query
-                with worker_queues_lock:
-                    worker_queues[worker_id].append(query)
+            # Submit the query to the appropriate executor
+            future = executors[worker_id].submit(time_query_execution, query)
+            with future_to_query_lock:
+                future_to_query[future] = query
+            with worker_queues_lock:
+                worker_queues[worker_id].append(query)
 
-            # Collecting the results as they complete
+        # Collecting the results as they complete
+        for executor in executors:
             for future in concurrent.futures.as_completed(future_to_query):
                 try:
                     hostname, execution_time = future.result()  # Get hostname and execution time
@@ -72,6 +81,10 @@ def run_queries(concurrent_workers, query_file):
                 except Exception as e:
                     query = future_to_query[future]
                     print(f"Error executing query for {query}: {str(e)}")
+
+        # Shutdown all executors
+        for executor in executors:
+            executor.shutdown()
 
         return results
 
@@ -84,7 +97,6 @@ def run_queries(concurrent_workers, query_file):
     except Exception as e:
         print(f"An unexpected error occurred: {str(e)}")
         return []
-
 
 def main():
     """
@@ -122,34 +134,6 @@ def main():
 
     except Exception as e:
         print(f"An error occurred during benchmarking: {str(e)}")
-
-
-def time_query_execution(query):
-    """
-    Helper function to execute the query and measure the time taken.
-
-    Args:
-        query (tuple): A tuple containing (hostname, start_time, end_time).
-
-    Returns:
-        tuple: (hostname, execution time in milliseconds)
-    """
-    hostname, start_time, end_time = query
-
-    # Record the start time just before executing the query
-    tik = time.time()
-
-    # Execute the query (assuming this is a synchronous blocking call)
-    execute_query(query)
-
-    # Record the end time after the query completes
-    tok = time.time()
-
-    # Calculate execution time in milliseconds
-    execution_time = 1000 * (tok - tik)
-
-    return hostname, execution_time
-
 
 if __name__ == "__main__":
     main()

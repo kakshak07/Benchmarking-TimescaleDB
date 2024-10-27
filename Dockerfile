@@ -13,5 +13,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code
 COPY . .
 
-# Run the migrations and benchmark commands (you can run these as part of the command in docker-compose.yml)
+# Run the migrations and benchmark commands
 CMD ["bash"]
